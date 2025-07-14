@@ -103,6 +103,7 @@ async function addNotification(
         headers: { Authorization: `Bearer ${userToken}` },
       }
     );
+    console.log(friendships_id, 'adfDFASDDGADFASG');
   } catch (err) {
     console.error('알림 추가 오류:', err);
   }

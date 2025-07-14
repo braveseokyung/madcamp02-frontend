@@ -101,6 +101,7 @@ function NotificationTab({
               <div className="text-sm text-gray-700">{noti.message}</div>
               <div className="text-xs text-gray-400">
                 {new Date(noti.created_at).toLocaleString()}
+                {noti.friendships_id}
               </div>
             </div>
             <div className="flex items-center gap-2">
