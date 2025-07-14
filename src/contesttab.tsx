@@ -240,12 +240,12 @@ function ContestTab({ userToken }: { userToken: string }) {
                 {selected.title}
                 </DialogTitle>
                 <DialogClose asChild>
-                <button
+                {/* <button
                     className="text-gray-400 hover:text-gray-600 transition-colors"
                     aria-label="닫기"
                 >
                     ×
-                </button>
+                </button> */}
                 </DialogClose>
             </div>
 
