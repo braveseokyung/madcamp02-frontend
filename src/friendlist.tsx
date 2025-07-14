@@ -33,10 +33,23 @@ interface UserSearchResult {
   is_online?: boolean;
 }
 
+interface SimilarityResult {
+  cosine_similarity: number;
+  user1_image_url: string;
+  user2_image_url: string;
+}
+
 interface FriendListProps {
   userToken: string;
   myUserId: number;
   myNickname: string;
+}
+
+function getFullImageUrl(image_url: string | undefined | null) {
+  if (!image_url) return '';
+  // 이미 http로 시작하면 그대로, 아니면 백엔드 주소 붙이기
+  if (/^https?:\/\//.test(image_url)) return image_url;
+  return `${BACKEND_URL}${image_url.startsWith('/') ? '' : '/'}${image_url}`;
 }
 
 async function searchByNickname(
@@ -63,7 +76,6 @@ async function addFriend(
 ): Promise<number | undefined> {
   if (!requesterid || !receiverid) return;
   try {
-    console.log('sdkfaj;l', receiverid, requesterid);
     const res = await axios.post(
       `${BACKEND_URL}/friendship_add`,
       {
@@ -75,8 +87,6 @@ async function addFriend(
         headers: { Authorization: `Bearer ${userToken}` },
       }
     );
-    // friendships_id 반환
-    console.log(res.data);
     return res.data.friendships_id;
   } catch (err) {
     console.error('친구 추가 오류:', err);
@@ -103,7 +113,6 @@ async function addNotification(
         headers: { Authorization: `Bearer ${userToken}` },
       }
     );
-    console.log(friendships_id, 'adfDFASDDGADFASG');
   } catch (err) {
     console.error('알림 추가 오류:', err);
   }
@@ -114,22 +123,34 @@ const FriendList: React.FC<FriendListProps> = ({
   myUserId,
   myNickname,
 }) => {
-  const [selectedFriend, setSelectedFriend] = useState<UserSearchResult | null>(
-    null
-  );
+  // 친구 검색 관련
   const [showSearch, setShowSearch] = useState(false);
-
   const [searchInput, setSearchInput] = useState('');
   const [searchResults, setSearchResults] = useState<UserSearchResult[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
 
+  // 친구 목록
   const [friends, setFriends] = useState<Friend[]>([]);
   const [friendsLoading, setFriendsLoading] = useState(false);
 
+  // 친구 정보 모달
+  const [selectedFriend, setSelectedFriend] = useState<UserSearchResult | null>(
+    null
+  );
+
+  // 유사도 모달
+  const [simModalOpen, setSimModalOpen] = useState(false);
+  const [simLoading, setSimLoading] = useState(false);
+  const [simError, setSimError] = useState<string | null>(null);
+  const [similarity, setSimilarity] = useState<SimilarityResult | null>(null);
+  const [simTarget, setSimTarget] = useState<Friend | null>(null);
+
+  // 검색 입력 핸들러
   const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchInput(e.target.value);
   };
 
+  // 검색 실행
   const doSearch = async () => {
     setSearchLoading(true);
     const results = await searchByNickname(searchInput, userToken);
@@ -137,10 +158,12 @@ const FriendList: React.FC<FriendListProps> = ({
     setSearchLoading(false);
   };
 
+  // 엔터로도 검색 가능
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') doSearch();
   };
 
+  // 친구 추가
   const handleAddFriend = async (
     receiverUserId: number,
     receiverNickname: string
@@ -177,6 +200,7 @@ const FriendList: React.FC<FriendListProps> = ({
     }
   };
 
+  // 친구 목록 불러오기
   const fetchFriends = async () => {
     setFriendsLoading(true);
     try {
@@ -194,6 +218,32 @@ const FriendList: React.FC<FriendListProps> = ({
     if (userToken) fetchFriends();
   }, [userToken]);
 
+  // 친구 클릭 → 최신 사진 유사도 모달
+  const handleFriendSimClick = async (friend: Friend) => {
+    setSimTarget(friend);
+    setSimModalOpen(true);
+    setSimLoading(true);
+    setSimError(null);
+    setSimilarity(null);
+    try {
+      const res = await axios.post(
+        `${BACKEND_URL}/latest-photo-similarity`,
+        {
+          user_id1: myUserId,
+          user_id2: friend.user.userId,
+        },
+        {
+          headers: { Authorization: `Bearer ${userToken}` },
+        }
+      );
+      setSimilarity(res.data);
+    } catch (err: any) {
+      setSimError(err.response?.data?.error || '유사도 계산 실패');
+    }
+    setSimLoading(false);
+  };
+
+  // 친구 정보 모달 (검색 결과에서 클릭 시)
   const handleSearchResultClick = (user: UserSearchResult) => {
     setSelectedFriend(user);
     setShowSearch(false);
@@ -201,6 +251,7 @@ const FriendList: React.FC<FriendListProps> = ({
 
   return (
     <div className="w-full max-w-2xl mx-auto">
+      {/* 헤더 */}
       <div className="flex items-center justify-between px-6 py-4 bg-gray-100 rounded-t-lg">
         <span className="text-xl font-bold">내 친구 목록</span>
         <Button
@@ -214,6 +265,7 @@ const FriendList: React.FC<FriendListProps> = ({
         </Button>
       </div>
 
+      {/* 친구 리스트 (accepted만) */}
       <div className="flex flex-col gap-2 p-8 bg-white rounded-b-lg">
         {friendsLoading && <div>로딩 중...</div>}
         {!friendsLoading && friends.length === 0 && (
@@ -222,12 +274,14 @@ const FriendList: React.FC<FriendListProps> = ({
         {friends.map((friend) => (
           <div
             key={friend.friendships_id}
-            className="flex items-center gap-3 p-2 border-b"
+            className="flex items-center gap-3 p-2 border-b cursor-pointer hover:bg-gray-50"
+            onClick={() => handleFriendSimClick(friend)}
+            title="최신 사진 닮은 정도 보기"
           >
             <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center text-lg font-bold overflow-hidden">
               {friend.user.profileImageUrl ? (
                 <img
-                  src={friend.user.profileImageUrl}
+                  src={getFullImageUrl(friend.user.profileImageUrl)}
                   alt={friend.user.nickname}
                   className="w-full h-full object-cover"
                 />
@@ -322,6 +376,67 @@ const FriendList: React.FC<FriendListProps> = ({
               ))}
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* 최신 사진 유사도 모달 */}
+      <Dialog open={simModalOpen} onOpenChange={setSimModalOpen}>
+        <DialogContent className="max-w-lg bg-white">
+          <DialogHeader>
+            <DialogTitle>최신 사진 닮은 정도</DialogTitle>
+            <DialogClose asChild></DialogClose>
+          </DialogHeader>
+          {simLoading ? (
+            <div className="py-12 text-center text-gray-400">
+              유사도 계산 중...
+            </div>
+          ) : simError ? (
+            <div className="py-12 text-center text-red-500">{simError}</div>
+          ) : similarity && simTarget ? (
+            <div className="flex flex-col items-center gap-6">
+              <div className="flex gap-8 items-end">
+                {/* 내 사진 */}
+                <div className="flex flex-col items-center">
+                  <div className="w-32 h-32 rounded-lg bg-gray-200 overflow-hidden mb-2 border-2 border-blue-400">
+                    <img
+                      src={getFullImageUrl(similarity.user1_image_url)}
+                      alt="내 사진"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="text-base font-bold text-blue-700">나</div>
+                </div>
+                {/* 유사도 시각화 */}
+                <div className="flex flex-col items-center">
+                  <div className="text-3xl font-bold text-indigo-600">
+                    {Math.round(((similarity.cosine_similarity + 1) / 2) * 100)}
+                    %
+                  </div>
+                  <div className="text-xs text-gray-500">닮은 정도</div>
+                </div>
+                {/* 친구 사진 */}
+                <div className="flex flex-col items-center">
+                  <div className="w-32 h-32 rounded-lg bg-gray-200 overflow-hidden mb-2 border-2 border-green-400">
+                    <img
+                      src={getFullImageUrl(similarity.user2_image_url)}
+                      alt="친구 사진"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="text-base font-bold text-green-700">
+                    {simTarget.user.nickname}
+                  </div>
+                </div>
+              </div>
+              <div className="w-full text-center text-sm text-gray-500 mt-2">
+                두 사람의 최신 사진 임베딩 벡터 코사인 유사도 기준
+              </div>
+            </div>
+          ) : (
+            <div className="py-12 text-center text-gray-400">
+              사진 정보가 없습니다.
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
