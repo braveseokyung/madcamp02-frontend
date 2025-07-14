@@ -15,10 +15,22 @@ import ContestTab from './contesttab';
 import NotificationTab from './notification';
 import SocialGoogle from './LoginPage'; // SocialKakao 대신 SocialGoogle 임포트
 import axios from 'axios';
-import { FaHome, FaUser, FaBell, FaTrophy, FaSignOutAlt} from 'react-icons/fa';
-import { uploadUserPhoto, getSimilarAnimal, getSimilarCelebrity } from '@/services/uploadService';
+import { FaHome, FaUser, FaBell, FaTrophy, FaSignOutAlt } from 'react-icons/fa';
+import {
+  uploadUserPhoto,
+  getSimilarAnimal,
+  getSimilarCelebrity,
+} from '@/services/uploadService';
 
 type ProfileImgType = string | null;
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
+interface UserProfile {
+  user_id: number;
+  nickname: string | null;
+  profile_image_url: string | null;
+  // 필요시 추가 필드
+}
 
 const tabList = [
   { label: '사진 업로드', value: 'upload' },
@@ -26,10 +38,10 @@ const tabList = [
 ];
 
 const SidebarMenus = [
-  { label: '닮은꼴', icon: FaHome},
-  { label: '내 친구' , icon: FaUser},
-  { label: '콘테스트' , icon: FaTrophy },
-  { label: '수신함' , icon: FaBell},
+  { label: '닮은꼴', icon: FaHome },
+  { label: '내 친구', icon: FaUser },
+  { label: '콘테스트', icon: FaTrophy },
+  { label: '수신함', icon: FaBell },
 ];
 
 const App: React.FC = () => {
@@ -42,16 +54,43 @@ const App: React.FC = () => {
   const [animalName, setAnimalName] = useState<string>('');
   const [celebrityName, setCelebrityName] = useState<string>('');
 
+  const [userInfo, setUserInfo] = useState<{
+    userid: number;
+    nickname: string;
+  } | null>(null);
+
   useEffect(() => {
     // 초기 로드 시 로컬 스토리지에 토큰이 있는지 확인하여 로그인 상태 유지
     const storedUserToken = localStorage.getItem('userToken');
-    console.log(localStorage.getItem("userToken"));
-  
-    if (storedUserToken) { // Google 로그인 시에는 자체 userToken만 확인
+    console.log(localStorage.getItem('userToken'));
+
+    if (storedUserToken) {
+      // Google 로그인 시에는 자체 userToken만 확인
       setIsLoggedIn(true);
       setUserToken(storedUserToken);
     }
   }, []);
+
+  // 2. 토큰이 세팅되면 프로필 정보 요청
+  useEffect(() => {
+    if (!userToken) return;
+    const fetchProfile = async () => {
+      try {
+        const res = await axios.get(`${BACKEND_URL}/api/profile`, {
+          headers: { Authorization: `Bearer ${userToken}` },
+        });
+        console.log(res.data.user);
+        setUserInfo({
+          nickname: res.data.user.nickname,
+          userid: res.data.user.id,
+        });
+        setProfileImg(res.data.user.profile_image_url);
+      } catch (err) {
+        console.error('프로필 정보 조회 실패', err);
+      }
+    };
+    fetchProfile();
+  }, [userToken]);
 
   // handleLoginSuccess 함수 시그니처 변경: Google 로그인에서는 userToken만 받음
   const handleLoginSuccess = (appToken: string) => {
@@ -70,7 +109,9 @@ const App: React.FC = () => {
   };
 
   // async 함수로 만들고 service 호출
-  const handleProfileImgChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleProfileImgChange = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = e.target.files?.[0];
     if (!file || !userToken) return;
 
@@ -80,11 +121,11 @@ const App: React.FC = () => {
     try {
       // 2) uploadService의 uploadUserPhoto 호출
       const photo = await uploadUserPhoto(file);
-      
+
       const embeddingArray = JSON.parse(photo.embedding) as number[];
       if (!Array.isArray(embeddingArray)) throw new Error('임베딩 포맷 오류');
       // console.log("embeddign", embeddingArray);
-      
+
       // 3) 서버에 저장된 실제 URL로 프로필 이미지 업데이트
       setProfileImg(photo.image_url);
       const { animal, animal_confidence } = await getSimilarAnimal(
@@ -95,7 +136,7 @@ const App: React.FC = () => {
         photo.facial_area.h
       );
       const celebRes = await getSimilarCelebrity(embeddingArray);
-      console.log("결과",celebRes.name);
+      console.log('결과', celebRes.name);
 
       setCelebrityName(celebRes.name);
       setAnimalName(animal);
@@ -104,7 +145,6 @@ const App: React.FC = () => {
       // 예시: photo.celebrity_url, photo.animal_url
       // setCelebrityImg(photo.celebrity_url || null);
       // setAnimalImg(photo.animal_url || null);
-
     } catch (err) {
       console.error('이미지 업로드 실패', err);
       alert('이미지 업로드에 실패했습니다.');
@@ -125,11 +165,8 @@ const App: React.FC = () => {
     // 로그인되지 않았다면 SocialGoogle 컴포넌트 렌더링
     return <SocialGoogle onLoginSuccess={handleLoginSuccess} />;
   }
-  
 
   return (
-
-    
     <div className="flex min-h-screen bg-[#f5f5f7] font-sans">
       {/* 사이드바 */}
       <aside className="w-50 bg-[#ededed] flex flex-col items-center pt-8">
@@ -146,7 +183,9 @@ const App: React.FC = () => {
               />
             )}
           </div>
-          <div className="text-xl text-[#222]">닉네임</div>
+          <div className="text-xl text-[#222]">
+            {userInfo?.nickname || '닉네임 없음'}
+          </div>
         </div>
         {SidebarMenus.map((menu, idx) => {
           const Icon = menu.icon;
@@ -185,7 +224,10 @@ const App: React.FC = () => {
           />
         ) : selectedMenuIdx === 1 ? (
           <div className="w-full flex flex-col items-center mt-16 text-2xl text-gray-600">
-            <FriendList />
+            <FriendList
+              userToken={userToken ?? ''}
+              myUserId={userInfo?.userid ?? 0}
+            />
           </div>
         ) : selectedMenuIdx === 2 ? (
           <div className="w-full flex flex-col items-center mt-16 text-2xl text-gray-600">
@@ -193,7 +235,10 @@ const App: React.FC = () => {
           </div>
         ) : (
           <div className="w-full flex flex-col items-center mt-16 text-2xl text-gray-600">
-            <NotificationTab />
+            <NotificationTab
+              userToken={userToken ?? ''}
+              userId={userInfo?.userid ?? 0}
+            />
           </div>
         )}
       </main>
