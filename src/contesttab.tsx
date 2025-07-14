@@ -231,52 +231,87 @@ function ContestTab({ userToken }: { userToken: string }) {
       </Dialog>
 
       {/* Contest Detail Modal */}
-      <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>{selected?.title} 참가자</DialogTitle>
-            <DialogClose asChild>
-              <button className="absolute top-4 right-4 text-2xl" aria-label="닫기">
-                &times;
-              </button>
-            </DialogClose>
-          </DialogHeader>
-          <div className="text-xs text-gray-500 mb-2">{selected?.description}</div>
-          <div className="grid grid-cols-2 gap-6 py-4">
-            {selected?.participants.length ? (
-              selected.participants.map((p) => (
-                <div key={p.user_id} className="flex flex-col items-center gap-2 bg-gray-50 rounded-lg p-3">
-                  <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                    {p.profile_image_url ? (
-                      <img
-                        src={p.profile_image_url}
-                        alt={p.nickname}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <span className="text-gray-400 text-2xl">👤</span>
-                    )}
-                  </div>
-                  <div className="font-semibold">{p.nickname}</div>
+      {selected && (
+        <Dialog open onOpenChange={() => setSelected(null)}>
+            <DialogContent className="max-w-lg bg-white rounded-lg shadow-xl p-6">
+            {/* 헤더 */}
+            <div className="flex items-center justify-between mb-4">
+                <DialogTitle className="text-2xl font-bold">
+                {selected.title}
+                </DialogTitle>
+                <DialogClose asChild>
+                <button
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                    aria-label="닫기"
+                >
+                    ×
+                </button>
+                </DialogClose>
+            </div>
+
+            {/* 설명 */}
+            <p className="text-sm text-gray-600 mb-6">
+                {selected.description}
+            </p>
+
+            {/* 참가자 섹션 */}
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                참가자 ({selected.participants.length})
+            </h3>
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-4 mb-6 max-h-64 overflow-y-auto">
+                {selected.participants.length > 0 ? (
+                selected.participants.map((p) => (
+                    <div
+                    key={p.user_id}
+                    className="flex flex-col items-center text-center"
+                    >
+                    <div className="w-16 h-16 mb-2 rounded-full overflow-hidden bg-gray-200">
+                        {p.profile_image_url ? (
+                        <img
+                            src={p.profile_image_url}
+                            alt={p.nickname}
+                            className="w-full h-full object-cover"
+                        />
+                        ) : (
+                        <span className="flex items-center justify-center w-full h-full text-gray-400 text-xl">
+                            👤
+                        </span>
+                        )}
+                    </div>
+                    <span className="text-sm font-medium text-gray-700">
+                        {p.nickname}
+                    </span>
+                    </div>
+                ))
+                ) : (
+                <div className="col-span-full py-8 text-center text-gray-400">
+                    아직 참가자가 없습니다.
                 </div>
-              ))
-            ) : (
-              <div className="col-span-2 text-center text-gray-400">아직 참가자가 없습니다.</div>
-            )}
-          </div>
-          <div className="flex gap-2 mt-2">
-            <Button className="w-full font-bold" onClick={() => {/* 도전 로직 */}}>
-              도전!
-            </Button>
-            <Button
-              className="w-full font-bold bg-red-500 hover:bg-red-600 text-white"
-              onClick={() => selected && handleDeleteContest(selected.contest_id)}
-            >
-              삭제
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+                )}
+            </div>
+
+            {/* 액션 버튼 */}
+            <div className="flex justify-end space-x-3">
+                <Button
+                variant="outline"
+                className="px-4 py-2"
+                onClick={() => {
+                    /* 도전 로직 */
+                }}
+                >
+                도전하기
+                </Button>
+                <Button
+                variant="destructive"
+                className="px-4 py-2"
+                onClick={() => handleDeleteContest(selected.contest_id)}
+                >
+                삭제
+                </Button>
+            </div>
+            </DialogContent>
+        </Dialog>
+        )}
     </div>
   );
 }
