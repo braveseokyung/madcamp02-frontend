@@ -227,6 +227,7 @@ const App: React.FC = () => {
             <FriendList
               userToken={userToken ?? ''}
               myUserId={userInfo?.userid ?? 0}
+              myNickname={userInfo?.nickname ?? ''}
             />
           </div>
         ) : selectedMenuIdx === 2 ? (

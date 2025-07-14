@@ -14,7 +14,7 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 interface Friend {
   friendshipId: number;
-  status: string; // 'pending', 'accepted', 'rejected'
+  status: string;
   direction: 'incoming' | 'outgoing';
   requestedAt: string;
   respondedAt: string | null;
@@ -36,13 +36,18 @@ interface UserSearchResult {
 interface FriendListProps {
   userToken: string;
   myUserId: number;
+  myNickname: string;
 }
 
-async function searchByNickname(nickname: string): Promise<UserSearchResult[]> {
+async function searchByNickname(
+  nickname: string,
+  userToken: string
+): Promise<UserSearchResult[]> {
   if (!nickname) return [];
   try {
     const res = await axios.get(`${BACKEND_URL}/searchnickname`, {
       params: { nickname },
+      headers: { Authorization: `Bearer ${userToken}` },
     });
     return res.data;
   } catch (err) {
@@ -53,15 +58,22 @@ async function searchByNickname(nickname: string): Promise<UserSearchResult[]> {
 
 async function addFriend(
   requesterid: number,
-  receiverid: number
+  receiverid: number,
+  userToken: string
 ): Promise<void> {
   if (!requesterid || !receiverid) return;
   try {
-    await axios.post(`${BACKEND_URL}/friendship_add`, {
-      requester_user_id: requesterid,
-      receiver_user_id: receiverid,
-      status: 'pending',
-    });
+    await axios.post(
+      `${BACKEND_URL}/friendship_add`,
+      {
+        requester_user_id: requesterid,
+        receiver_user_id: receiverid,
+        status: 'pending',
+      },
+      {
+        headers: { Authorization: `Bearer ${userToken}` },
+      }
+    );
   } catch (err) {
     console.error('친구 추가 오류:', err);
   }
@@ -69,55 +81,58 @@ async function addFriend(
 
 async function addNotification(
   user_id: number,
-  type: string,
-  message: string
+  message: string,
+  userToken: string
 ): Promise<void> {
-  if (!user_id || !type || !message) return;
+  if (!user_id || !message) return;
   try {
-    await axios.post(`${BACKEND_URL}/notification_add`, {
-      user_id,
-      type,
-      message,
-    });
+    await axios.post(
+      `${BACKEND_URL}/notification_add`,
+      {
+        user_id,
+        message,
+      },
+      {
+        headers: { Authorization: `Bearer ${userToken}` },
+      }
+    );
   } catch (err) {
     console.error('알림 추가 오류:', err);
   }
 }
 
-const FriendList: React.FC<FriendListProps> = ({ userToken, myUserId }) => {
+const FriendList: React.FC<FriendListProps> = ({
+  userToken,
+  myUserId,
+  myNickname,
+}) => {
   const [selectedFriend, setSelectedFriend] = useState<UserSearchResult | null>(
     null
   );
   const [showSearch, setShowSearch] = useState(false);
 
-  // 검색 관련 상태
   const [searchInput, setSearchInput] = useState('');
   const [searchResults, setSearchResults] = useState<UserSearchResult[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
 
-  // 친구 목록 상태
   const [friends, setFriends] = useState<Friend[]>([]);
   const [friendsLoading, setFriendsLoading] = useState(false);
 
-  // 검색 입력 핸들러
   const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchInput(e.target.value);
   };
 
-  // 검색 버튼 클릭 또는 엔터 시
   const doSearch = async () => {
     setSearchLoading(true);
-    const results = await searchByNickname(searchInput);
+    const results = await searchByNickname(searchInput, userToken);
     setSearchResults(results);
     setSearchLoading(false);
   };
 
-  // 엔터로도 검색 가능
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') doSearch();
   };
 
-  // 친구 추가
   const handleAddFriend = async (
     receiverUserId: number,
     receiverNickname: string
@@ -131,11 +146,11 @@ const FriendList: React.FC<FriendListProps> = ({ userToken, myUserId }) => {
       return;
     }
     try {
-      await addFriend(myUserId, receiverUserId);
+      await addFriend(myUserId, receiverUserId, userToken);
       await addNotification(
         receiverUserId,
-        'friend_request',
-        `${receiverNickname}님께 친구 요청을 보냈습니다.`
+        `${myNickname}님이 친구 요청을 보냈습니다.`,
+        userToken
       );
       alert('친구 요청이 전송되었습니다!');
       setShowSearch(false);
@@ -145,7 +160,6 @@ const FriendList: React.FC<FriendListProps> = ({ userToken, myUserId }) => {
     }
   };
 
-  // 친구 요청 수락/거절
   const handleFriendshipAction = async (
     friendshipId: number,
     status: 'accepted' | 'rejected'
@@ -169,14 +183,12 @@ const FriendList: React.FC<FriendListProps> = ({ userToken, myUserId }) => {
     }
   };
 
-  // 친구 목록 불러오기
   const fetchFriends = async () => {
     setFriendsLoading(true);
     try {
       const res = await axios.get(`${BACKEND_URL}/friends`, {
         headers: { Authorization: `Bearer ${userToken}` },
       });
-      // accepted만 필터
       setFriends(res.data.filter((f: Friend) => f.status === 'accepted'));
     } catch (err) {
       console.error('친구 목록 조회 실패:', err);
@@ -188,7 +200,6 @@ const FriendList: React.FC<FriendListProps> = ({ userToken, myUserId }) => {
     if (userToken) fetchFriends();
   }, [userToken]);
 
-  // 검색 결과 클릭 시 친구 정보 모달로 보여주기
   const handleSearchResultClick = (user: UserSearchResult) => {
     setSelectedFriend(user);
     setShowSearch(false);
@@ -196,7 +207,6 @@ const FriendList: React.FC<FriendListProps> = ({ userToken, myUserId }) => {
 
   return (
     <div className="w-full max-w-2xl mx-auto">
-      {/* 헤더 */}
       <div className="flex items-center justify-between px-6 py-4 bg-gray-100 rounded-t-lg">
         <span className="text-xl font-bold">내 친구 목록</span>
         <Button
@@ -210,7 +220,6 @@ const FriendList: React.FC<FriendListProps> = ({ userToken, myUserId }) => {
         </Button>
       </div>
 
-      {/* 친구 리스트 (accepted만) */}
       <div className="flex flex-col gap-2 p-8 bg-white rounded-b-lg">
         {friendsLoading && <div>로딩 중...</div>}
         {!friendsLoading && friends.length === 0 && (

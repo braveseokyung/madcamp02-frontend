@@ -1,4 +1,3 @@
-// NotificationTab.tsx
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Card } from './components/ui/card';
@@ -8,11 +7,9 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 interface Notification {
   notification_id: number;
-  type: string;
   message: string;
   is_read: boolean;
   created_at: string;
-  friendship_id?: number; // 친구 요청 알림에만 포함
 }
 
 interface NotificationTabProps {
@@ -42,7 +39,6 @@ function NotificationTab({ userToken, userId }: NotificationTabProps) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // 알림 목록 불러오기
   const fetchNotifications = async () => {
     setLoading(true);
     try {
@@ -58,30 +54,8 @@ function NotificationTab({ userToken, userId }: NotificationTabProps) {
 
   useEffect(() => {
     if (userToken) fetchNotifications();
-    // eslint-disable-next-line
   }, [userToken]);
 
-  // 친구 요청 수락/거절
-  const handleFriendRequest = async (
-    friendship_id: number | undefined,
-    notification_id: number,
-    status: 'accepted' | 'pending' | 'rejected'
-  ) => {
-    if (!friendship_id) return;
-    try {
-      await axios.patch(
-        `${BACKEND_URL}/friendship/${friendship_id}`,
-        { status },
-        { headers: { Authorization: `Bearer ${userToken}` } }
-      );
-      // 성공 시 해당 알림 삭제
-      await handleDelete(notification_id);
-    } catch (err) {
-      alert('친구 요청 처리 실패');
-    }
-  };
-
-  // 알림 삭제
   const handleDelete = async (notification_id: number) => {
     const success = await deleteNotification(
       userId,
@@ -112,58 +86,18 @@ function NotificationTab({ userToken, userId }: NotificationTabProps) {
             }`}
           >
             <div>
-              <div className="font-semibold">
-                {noti.type === 'friend_request'
-                  ? '친구 요청'
-                  : noti.type === 'friend_accept'
-                  ? '친구 수락'
-                  : '알림'}
-              </div>
               <div className="text-sm text-gray-700">{noti.message}</div>
               <div className="text-xs text-gray-400">
                 {new Date(noti.created_at).toLocaleString()}
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              {noti.type === 'friend_request' && noti.friendship_id ? (
-                <>
-                  <Button
-                    size="sm"
-                    className="bg-green-500 hover:bg-green-600 text-white font-bold px-4 py-1 rounded"
-                    onClick={() =>
-                      handleFriendRequest(
-                        noti.friendship_id,
-                        noti.notification_id,
-                        'accepted'
-                      )
-                    }
-                  >
-                    수락
-                  </Button>
-                  <Button
-                    size="sm"
-                    className="bg-gray-300 hover:bg-red-400 text-black font-bold px-4 py-1 rounded"
-                    onClick={() =>
-                      handleFriendRequest(
-                        noti.friendship_id,
-                        noti.notification_id,
-                        'rejected'
-                      )
-                    }
-                  >
-                    거절
-                  </Button>
-                </>
-              ) : (
-                <button
-                  className="text-gray-400 hover:text-red-400 text-lg px-2"
-                  aria-label="알림 삭제"
-                  onClick={() => handleDelete(noti.notification_id)}
-                >
-                  ×
-                </button>
-              )}
-            </div>
+            <button
+              className="text-gray-400 hover:text-red-400 text-lg px-2"
+              aria-label="알림 삭제"
+              onClick={() => handleDelete(noti.notification_id)}
+            >
+              ×
+            </button>
           </Card>
         ))
       )}
