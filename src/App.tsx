@@ -58,7 +58,7 @@ const App: React.FC = () => {
     setIsLoggedIn(true);
     setUserToken(appToken);
     localStorage.setItem('userToken', appToken);
-    alert('구글 로그인 성공!');
+    alert('로그인 성공');
   };
 
   const handleLogout = async () => {
