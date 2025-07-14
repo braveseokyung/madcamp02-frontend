@@ -185,11 +185,15 @@ const App: React.FC = () => {
           />
         ) : selectedMenuIdx === 1 ? (
           <div className="w-full flex flex-col items-center mt-16 text-2xl text-gray-600">
-            내 친구 탭 컨텐츠
+            <FriendList />
+          </div>
+        ) : selectedMenuIdx === 2 ? (
+          <div className="w-full flex flex-col items-center mt-16 text-2xl text-gray-600">
+            <ContestTab />
           </div>
         ) : (
           <div className="w-full flex flex-col items-center mt-16 text-2xl text-gray-600">
-            콘테스트 탭 컨텐츠
+            <NotificationTab />
           </div>
         )}
       </main>

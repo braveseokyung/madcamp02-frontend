@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Button } from '../../mad02/src/components/ui/button';
+import { Button } from '../../madcamp02/src/components/ui/button';
 
 // 탭 배열 타입 정의
 interface Tab {
