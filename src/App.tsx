@@ -234,7 +234,8 @@ const App: React.FC = () => {
           <div className="w-full flex flex-col items-center mt-16 text-2xl text-gray-600">
             <ContestTab
               userToken={userToken ?? ''}
-             />
+              myUserId={userInfo?.userid ?? 0}
+            />
           </div>
         ) : (
           <div className="w-full flex flex-col items-center mt-16 text-2xl text-gray-600">
