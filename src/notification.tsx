@@ -1,129 +1,125 @@
-//notification.tsx
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 import { Card } from './components/ui/card';
 import { Button } from './components/ui/button';
-// Friend 타입은 FriendList와 동일하게 맞춰주세요
-interface Friend {
-  id: number;
-  name: string;
-  email: string;
-  status: string;
-  avatarUrl?: string | null;
+
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
+interface Notification {
+  notification_id: number;
+  message: string;
+  is_read: boolean;
+  created_at: string;
+  friendships_id?: number;
 }
 
-interface FriendRequest {
-  id: number;
-  name: string;
-  email: string;
-  status: string;
-  avatarUrl?: string | null;
+interface NotificationTabProps {
+  userToken: string;
+  userId: number;
+  onFriendAccepted?: () => void;
 }
 
-// 샘플 친구 요청 데이터
-const initialRequests: FriendRequest[] = [
-  {
-    id: 1,
-    name: '김철수',
-    email: 'chulsoo@email.com',
-    status: '대기',
-    avatarUrl: null,
-  },
-  {
-    id: 2,
-    name: '이영희',
-    email: 'younghee@email.com',
-    status: '대기',
-    avatarUrl: null,
-  },
-  {
-    id: 3,
-    name: '이영희',
-    email: 'younghee@email.com',
-    status: '대기',
-    avatarUrl: null,
-  },
-  {
-    id: 4,
-    name: '이영희',
-    email: 'younghee@email.com',
-    status: '대기',
-    avatarUrl: null,
-  },
-  {
-    id: 5,
-    name: '이영희',
-    email: 'younghee@email.com',
-    status: '대기',
-    avatarUrl: null,
-  },
-  {
-    id: 6,
-    name: '이영희',
-    email: 'younghee@email.com',
-    status: '대기',
-    avatarUrl: null,
-  },
-];
+function NotificationTab({
+  userToken,
+  userId,
+  onFriendAccepted,
+}: NotificationTabProps) {
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(false);
 
-function NotificationTab() {
-  // friends는 실제 FriendList와 공유하거나, props로 내려받을 수도 있음
-  const [friends, setFriends] = useState<Friend[]>([]);
-  const [requests, setRequests] = useState<FriendRequest[]>(initialRequests);
+  const fetchNotifications = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.get(`${BACKEND_URL}/notifications`, {
+        headers: { Authorization: `Bearer ${userToken}` },
+      });
+      setNotifications(res.data);
+    } catch (err) {
+      console.error('알림 목록 조회 실패:', err);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    if (userToken) fetchNotifications();
+  }, [userToken]);
 
   // 친구 요청 수락
-  const handleAccept = (id: number) => {
-    const req = requests.find((r) => r.id === id);
-    if (!req) return;
-    setFriends((prev) => [...prev, { ...req, status: '온라인' }]);
-    setRequests((prev) => prev.filter((r) => r.id !== id));
+  const handleAccept = async (
+    friendships_id: number | undefined,
+    notification_id: number
+  ) => {
+    if (!friendships_id) return;
+    try {
+      await axios.patch(
+        `${BACKEND_URL}/friendship/${friendships_id}`,
+        { status: 'accepted' },
+        { headers: { Authorization: `Bearer ${userToken}` } }
+      );
+      await handleDelete(notification_id);
+      if (onFriendAccepted) onFriendAccepted();
+      alert('친구 요청을 수락했습니다!');
+    } catch (err) {
+      alert('친구 요청 수락 실패');
+    }
   };
 
-  // 친구 요청 거절(x)
-  const handleReject = (id: number) => {
-    setRequests((prev) => prev.filter((r) => r.id !== id));
+  // 알림 삭제
+  const handleDelete = async (notification_id: number) => {
+    try {
+      await axios.post(
+        `${BACKEND_URL}/notification_delete`,
+        { user_id: userId, notification_id },
+        { headers: { Authorization: `Bearer ${userToken}` } }
+      );
+      setNotifications((prev) =>
+        prev.filter((n) => n.notification_id !== notification_id)
+      );
+    } catch {
+      alert('알림 삭제 실패');
+    }
   };
+
+  // 친구 요청 알림 판별
+  const isFriendRequest = (noti: Notification) => !!noti.friendships_id;
 
   return (
     <div className="w-full max-w-xl mx-auto flex flex-col gap-4 mt-8">
-      {requests.length === 0 ? (
-        <div className="text-center text-gray-400">
-          새로운 친구 요청이 없습니다.
-        </div>
+      {loading ? (
+        <div className="text-center text-gray-400">로딩 중...</div>
+      ) : notifications.length === 0 ? (
+        <div className="text-center text-gray-400">새로운 알림이 없습니다.</div>
       ) : (
-        requests.map((req) => (
+        notifications.map((noti) => (
           <Card
-            key={req.id}
-            className="flex items-center justify-between px-6 py-4 gap-4 shadow-sm"
+            key={noti.notification_id}
+            className={`flex items-center justify-between px-6 py-4 gap-4 shadow-sm ${
+              noti.is_read ? 'bg-gray-100' : 'bg-white'
+            }`}
           >
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                {req.avatarUrl ? (
-                  <img
-                    src={req.avatarUrl}
-                    alt={req.name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <span className="text-gray-400 text-2xl">👤</span>
-                )}
-              </div>
-              <div>
-                <div className="font-semibold">{req.name}</div>
-                <div className="text-xs text-gray-500">{req.email}</div>
+            <div>
+              <div className="text-sm text-gray-700">{noti.message}</div>
+              <div className="text-xs text-gray-400">
+                {new Date(noti.created_at).toLocaleString()}
+                {noti.friendships_id}
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                className="bg-green-500 hover:bg-green-600 text-white font-bold px-4 py-1 rounded"
-                onClick={() => handleAccept(req.id)}
-              >
-                수락
-              </Button>
+              {isFriendRequest(noti) && (
+                <Button
+                  size="sm"
+                  className="bg-green-500 hover:bg-green-600 text-white font-bold px-4 py-1 rounded"
+                  onClick={() =>
+                    handleAccept(noti.friendships_id, noti.notification_id)
+                  }
+                >
+                  수락
+                </Button>
+              )}
               <button
                 className="text-gray-400 hover:text-red-400 text-lg px-2"
                 aria-label="알림 삭제"
-                onClick={() => handleReject(req.id)}
+                onClick={() => handleDelete(noti.notification_id)}
               >
                 ×
               </button>
