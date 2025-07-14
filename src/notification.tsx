@@ -10,32 +10,20 @@ interface Notification {
   message: string;
   is_read: boolean;
   created_at: string;
+  friendships_id?: number;
 }
 
 interface NotificationTabProps {
   userToken: string;
   userId: number;
+  onFriendAccepted?: () => void;
 }
 
-async function deleteNotification(
-  user_id: number,
-  notification_id: number,
-  userToken: string
-): Promise<boolean> {
-  try {
-    await axios.post(
-      `${BACKEND_URL}/notification_delete`,
-      { user_id, notification_id },
-      { headers: { Authorization: `Bearer ${userToken}` } }
-    );
-    return true;
-  } catch (err) {
-    console.error('알림 삭제 오류:', err);
-    return false;
-  }
-}
-
-function NotificationTab({ userToken, userId }: NotificationTabProps) {
+function NotificationTab({
+  userToken,
+  userId,
+  onFriendAccepted,
+}: NotificationTabProps) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -56,20 +44,44 @@ function NotificationTab({ userToken, userId }: NotificationTabProps) {
     if (userToken) fetchNotifications();
   }, [userToken]);
 
+  // 친구 요청 수락
+  const handleAccept = async (
+    friendships_id: number | undefined,
+    notification_id: number
+  ) => {
+    if (!friendships_id) return;
+    try {
+      await axios.patch(
+        `${BACKEND_URL}/friendship/${friendships_id}`,
+        { status: 'accepted' },
+        { headers: { Authorization: `Bearer ${userToken}` } }
+      );
+      await handleDelete(notification_id);
+      if (onFriendAccepted) onFriendAccepted();
+      alert('친구 요청을 수락했습니다!');
+    } catch (err) {
+      alert('친구 요청 수락 실패');
+    }
+  };
+
+  // 알림 삭제
   const handleDelete = async (notification_id: number) => {
-    const success = await deleteNotification(
-      userId,
-      notification_id,
-      userToken
-    );
-    if (success) {
+    try {
+      await axios.post(
+        `${BACKEND_URL}/notification_delete`,
+        { user_id: userId, notification_id },
+        { headers: { Authorization: `Bearer ${userToken}` } }
+      );
       setNotifications((prev) =>
         prev.filter((n) => n.notification_id !== notification_id)
       );
-    } else {
+    } catch {
       alert('알림 삭제 실패');
     }
   };
+
+  // 친구 요청 알림 판별
+  const isFriendRequest = (noti: Notification) => !!noti.friendships_id;
 
   return (
     <div className="w-full max-w-xl mx-auto flex flex-col gap-4 mt-8">
@@ -91,13 +103,26 @@ function NotificationTab({ userToken, userId }: NotificationTabProps) {
                 {new Date(noti.created_at).toLocaleString()}
               </div>
             </div>
-            <button
-              className="text-gray-400 hover:text-red-400 text-lg px-2"
-              aria-label="알림 삭제"
-              onClick={() => handleDelete(noti.notification_id)}
-            >
-              ×
-            </button>
+            <div className="flex items-center gap-2">
+              {isFriendRequest(noti) && (
+                <Button
+                  size="sm"
+                  className="bg-green-500 hover:bg-green-600 text-white font-bold px-4 py-1 rounded"
+                  onClick={() =>
+                    handleAccept(noti.friendships_id, noti.notification_id)
+                  }
+                >
+                  수락
+                </Button>
+              )}
+              <button
+                className="text-gray-400 hover:text-red-400 text-lg px-2"
+                aria-label="알림 삭제"
+                onClick={() => handleDelete(noti.notification_id)}
+              >
+                ×
+              </button>
+            </div>
           </Card>
         ))
       )}

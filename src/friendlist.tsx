@@ -13,7 +13,7 @@ import { Input } from './components/ui/input';
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 interface Friend {
-  friendshipId: number;
+  friendships_id: number;
   status: string;
   direction: 'incoming' | 'outgoing';
   requestedAt: string;
@@ -60,10 +60,11 @@ async function addFriend(
   requesterid: number,
   receiverid: number,
   userToken: string
-): Promise<void> {
+): Promise<number | undefined> {
   if (!requesterid || !receiverid) return;
   try {
-    await axios.post(
+    console.log('sdkfaj;l', receiverid, requesterid);
+    const res = await axios.post(
       `${BACKEND_URL}/friendship_add`,
       {
         requester_user_id: requesterid,
@@ -74,23 +75,29 @@ async function addFriend(
         headers: { Authorization: `Bearer ${userToken}` },
       }
     );
+    // friendships_id 반환
+    console.log(res.data);
+    return res.data.friendships_id;
   } catch (err) {
     console.error('친구 추가 오류:', err);
+    return;
   }
 }
 
 async function addNotification(
   user_id: number,
   message: string,
+  friendships_id: number,
   userToken: string
 ): Promise<void> {
-  if (!user_id || !message) return;
+  if (!user_id || !message || !friendships_id) return;
   try {
     await axios.post(
       `${BACKEND_URL}/notification_add`,
       {
         user_id,
         message,
+        friendships_id,
       },
       {
         headers: { Authorization: `Bearer ${userToken}` },
@@ -146,10 +153,19 @@ const FriendList: React.FC<FriendListProps> = ({
       return;
     }
     try {
-      await addFriend(myUserId, receiverUserId, userToken);
+      const friendships_id = await addFriend(
+        myUserId,
+        receiverUserId,
+        userToken
+      );
+      if (!friendships_id) {
+        alert('친구 추가 요청 실패');
+        return;
+      }
       await addNotification(
         receiverUserId,
         `${myNickname}님이 친구 요청을 보냈습니다.`,
+        friendships_id,
         userToken
       );
       alert('친구 요청이 전송되었습니다!');
@@ -157,29 +173,6 @@ const FriendList: React.FC<FriendListProps> = ({
       fetchFriends();
     } catch (err) {
       alert('친구 추가 요청 실패');
-    }
-  };
-
-  const handleFriendshipAction = async (
-    friendshipId: number,
-    status: 'accepted' | 'rejected'
-  ) => {
-    try {
-      await axios.patch(
-        `${BACKEND_URL}/friendship/${friendshipId}`,
-        { status },
-        {
-          headers: { Authorization: `Bearer ${userToken}` },
-        }
-      );
-      fetchFriends();
-      alert(
-        status === 'accepted'
-          ? '친구 요청을 수락했습니다.'
-          : '친구 요청을 거절했습니다.'
-      );
-    } catch (err) {
-      alert('처리 실패');
     }
   };
 
@@ -227,7 +220,7 @@ const FriendList: React.FC<FriendListProps> = ({
         )}
         {friends.map((friend) => (
           <div
-            key={friend.friendshipId}
+            key={friend.friendships_id}
             className="flex items-center gap-3 p-2 border-b"
           >
             <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center text-lg font-bold overflow-hidden">
