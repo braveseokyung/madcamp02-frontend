@@ -1,5 +1,5 @@
 // App.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -62,12 +62,10 @@ const App: React.FC = () => {
   };
 
   const handleLogout = async () => {
-
     // 프론트엔드 상태 및 스토리지 클리어
     setIsLoggedIn(false);
     setUserToken(null);
     localStorage.removeItem('userToken');
-
     alert('로그아웃 되었습니다.');
   };
 
@@ -89,7 +87,13 @@ const App: React.FC = () => {
       
       // 3) 서버에 저장된 실제 URL로 프로필 이미지 업데이트
       setProfileImg(photo.image_url);
-      const { animal, animal_confidence } = await getSimilarAnimal(photo.image_url, photo.facial_area.x, photo.facial_area.y, photo.facial_area.w, photo.facial_area.h);
+      const { animal, animal_confidence } = await getSimilarAnimal(
+        photo.image_url,
+        photo.facial_area.x,
+        photo.facial_area.y,
+        photo.facial_area.w,
+        photo.facial_area.h
+      );
       const celebRes = await getSimilarCelebrity(embeddingArray);
       console.log("결과",celebRes.name);
 
@@ -106,7 +110,6 @@ const App: React.FC = () => {
       alert('이미지 업로드에 실패했습니다.');
     } finally {
     }
-
   };
 
   const handlePendingImgChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -118,7 +121,15 @@ const App: React.FC = () => {
     }
   };
 
+  if (!isLoggedIn) {
+    // 로그인되지 않았다면 SocialGoogle 컴포넌트 렌더링
+    return <SocialGoogle onLoginSuccess={handleLoginSuccess} />;
+  }
+  
+
   return (
+
+    
     <div className="flex min-h-screen bg-[#f5f5f7] font-sans">
       {/* 사이드바 */}
       <aside className="w-50 bg-[#ededed] flex flex-col items-center pt-8">
@@ -135,23 +146,17 @@ const App: React.FC = () => {
               />
             )}
           </div>
-          <div className="text-xl text-[#222]">닉네임</div> {/* 실제 닉네임 표시 로직 추가 필요 */}
+          <div className="text-xl text-[#222]">닉네임</div>
         </div>
         {SidebarMenus.map((menu, idx) => {
           const Icon = menu.icon;
-          const isSelected = selectedMenuIdx === idx;
-
           return (
             <button
               key={menu.label}
               onClick={() => setSelectedMenuIdx(idx)}
               type="button"
-              className={`
-                w-[90%] flex items-center py-4 mb-3 rounded-lg text-lg cursor-pointer font-semibold border-none
-                
-              `}
+              className="w-[90%] flex items-center py-4 mb-3 rounded-lg text-lg cursor-pointer font-semibold border-none"
             >
-              {/* 4) 버튼 안에 아이콘 + 레이블 */}
               <Icon className="mr-3" size={20} />
               <span>{menu.label}</span>
             </button>
@@ -190,12 +195,14 @@ const App: React.FC = () => {
       </main>
 
       {/* 프로필 모달 */}
+      {/*
       <ProfileModal
         open={showProfile}
         onClose={() => setShowProfile(false)}
         profileImg={profileImg}
         handleProfileImgChange={handleProfileImgChange}
       />
+      */}
     </div>
   );
 };
