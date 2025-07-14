@@ -374,8 +374,9 @@ function ContestTab({
                         <div className="text-xs text-gray-500">
                           유사도:{' '}
                           {rank.similarity_score !== null
-                            ? Math.round(Number(rank.similarity_score) * 100) /
-                              100
+                            ? Math.round(
+                                ((rank.similarity_score + 1) / 2) * 100
+                              )
                             : '-'}
                         </div>
                       </div>
