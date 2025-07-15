@@ -155,6 +155,7 @@ const App: React.FC = () => {
       // setAnimalImg(photo.animal_url || null);
     } catch (err) {
       console.error('이미지 업로드 실패', err);
+      console.error('이미지 업로드 실패', err.message);
       alert('이미지 업로드에 실패했습니다.');
     } finally {
     }
