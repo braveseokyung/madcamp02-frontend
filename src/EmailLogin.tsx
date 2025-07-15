@@ -1,8 +1,26 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+// import type { Profile } from './types';
 
 interface EmailLoginProps {
   onLoginSuccess: (userToken: string) => void;
+}
+
+export interface EmailLoginRequest {
+  email: string;
+  password: string;
+}
+
+/** 서버 → 클라이언트: 로그인 성공 응답 */
+export interface EmailLoginResponse {
+  token: string;
+  user: {
+    user_id: number;
+    email: string;
+    nickname: string;
+    profile_image_url: string | null;
+    is_online: boolean;
+  };
 }
 
 const EmailLogin: React.FC<EmailLoginProps> = ({ onLoginSuccess }) => {
@@ -19,7 +37,7 @@ const EmailLogin: React.FC<EmailLoginProps> = ({ onLoginSuccess }) => {
     e.preventDefault();
     setErrorMsg(null);
     try {
-      const res = await axios.post(BACKEND_EMAIL_LOGIN_URI, {
+      const res = await axios.post<EmailLoginResponse>(BACKEND_EMAIL_LOGIN_URI, {
         email,
         password,
       });
