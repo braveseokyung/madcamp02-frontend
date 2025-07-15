@@ -219,6 +219,7 @@ const App: React.FC = () => {
             handleProfileImgChange={handleProfileImgChange}
             animalName={animalName}
             celebrityName={celebrityName}
+            myNickname={userInfo?.nickname ?? ''}
             // animalImg={animalName ? `./assets/animals/${animalName}.jpg` : null}
             // handlePendingImgChange={handlePendingImgChange}
           />
