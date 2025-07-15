@@ -20,7 +20,7 @@ const SocialGoogle: React.FC<SocialGoogleProps> = ({ onLoginSuccess }) => {
   // IMPORTANT: 이 redirect_uri는 구글 개발자 콘솔에 등록될 프론트엔드의 콜백 URI입니다.
   // 이 경로로 인가 코드를 받을 것입니다.
   // 예: http://localhost:5173/auth/google/callback
-  const GOOGLE_REDIRECT_URI: string = 'https://facer-lake.vercel.app/auth/callback';
+  const GOOGLE_REDIRECT_URI: string = 'http://facer-lake.vercel.app/auth/callback';
   // const GOOGLE_REDIRECT_URI: string = 'http://localhost:5173/auth/callback';
 
   // 백엔드 로그인 엔드포인트 (VM IP 주소와 포트로 변경 필요)
