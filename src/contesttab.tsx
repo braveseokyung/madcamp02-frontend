@@ -312,10 +312,13 @@ function ContestTab({
 
       {/* Add Contest Modal */}
       <Dialog open={showAdd} onOpenChange={setShowAdd}>
-        <DialogContent className="max-w-xs bg-white">
-          <DialogHeader>
+        <DialogContent className="max-w-xs bg-white pt-10">
+          <DialogHeader className="relative">
             <DialogTitle>콘테스트 추가</DialogTitle>
-            <DialogClose asChild />
+            <DialogClose
+              asChild
+              className="absolute right-4 top-4 w-6 h-6 text-gray-500 hover:text-gray-700"
+            />
           </DialogHeader>
           <div className="flex flex-col gap-4">
             <Input
@@ -355,7 +358,10 @@ function ContestTab({
                 이미지 선택
               </span>
             </label>
-            <Button onClick={handleAddContest} className="w-full font-bold">
+            <Button
+              onClick={handleAddContest}
+              className="w-full font-bold bg-[#00FF00]"
+            >
               추가
             </Button>
           </div>
@@ -462,7 +468,7 @@ function ContestTab({
             <div className="flex justify-end space-x-3">
               <Button
                 variant="outline"
-                className="px-4 py-2"
+                className="px-4 py-2 bg-[#00FF00]"
                 onClick={() => handleChallenge(selected)}
               >
                 도전하기

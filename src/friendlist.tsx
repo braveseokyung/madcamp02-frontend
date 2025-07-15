@@ -350,15 +350,20 @@ const FriendList: React.FC<FriendListProps> = ({
             <DialogTitle>친구 검색</DialogTitle>
             <DialogClose asChild></DialogClose>
           </DialogHeader>
-          <div className="flex flex-col gap-4">
-            <div className="flex gap-2">
+          <div className="flex flex-col gap-4 mt-4">
+            <div className="flex gap-2 w-full">
               <Input
+                className="flex-1"
                 placeholder="닉네임으로 검색"
                 value={searchInput}
                 onChange={handleSearchInput}
                 onKeyDown={handleSearchKeyDown}
               />
-              <Button onClick={doSearch} disabled={searchLoading}>
+              <Button
+                onClick={doSearch}
+                disabled={searchLoading}
+                className="shrink-0 bg-[#FF9966]"
+              >
                 검색
               </Button>
             </div>
@@ -370,21 +375,23 @@ const FriendList: React.FC<FriendListProps> = ({
               {searchResults.map((user) => (
                 <div
                   key={user.user_id}
-                  className="p-3 rounded-md hover:bg-gray-100 cursor-pointer flex items-center gap-2"
+                  className="p-3 rounded-md hover:bg-gray-100 cursor-pointer flex items-center gap-4"
                 >
                   <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-lg font-bold">
                     {user.nickname[0]}
                   </div>
-                  <div>
+                  <div className="flex flex-col flex-grow">
                     <div className="font-semibold">{user.nickname}</div>
                     <div className="text-xs text-gray-500">{user.email}</div>
                   </div>
-                  <div
-                    className={`ml-auto text-xs ${
-                      user.is_online ? 'text-green-600' : 'text-gray-400'
-                    }`}
-                  >
-                    {user.is_online ? '온라인' : '오프라인'}
+                  <div className="flex items-center gap-4">
+                    <div
+                      className={`text-xs ${
+                        user.is_online ? 'text-green-600' : 'text-gray-400'
+                      }`}
+                    >
+                      {user.is_online ? '온라인' : '오프라인'}
+                    </div>
                   </div>
                   <Button
                     size="sm"
