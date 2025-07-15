@@ -31,7 +31,7 @@ const EmailLogin: React.FC<EmailLoginProps> = ({ onLoginSuccess }) => {
   // .env 파일에 VITE_BACKEND_EMAIL_LOGIN_URI 를 설정하세요
   const BACKEND_EMAIL_LOGIN_URI =
     import.meta.env.VITE_BACKEND_EMAIL_LOGIN_URI ||
-    'https://172.20.12.113:443/auth/email/login';
+    'http://172.20.12.113:80/auth/email/login';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
