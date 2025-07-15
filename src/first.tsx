@@ -5,7 +5,7 @@ import Webcam from 'react-webcam';
 
 interface FirstProps {
   profileImg: string | null;
-  pendingImg: string | null;
+  // pendingImg: string | null;
   handleProfileImgChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   animalName: string | null;
   celebrityName: string | null;
@@ -14,15 +14,20 @@ interface FirstProps {
 
 const First: React.FC<FirstProps> = ({
   profileImg,
-  pendingImg,
+  // pendingImg,
   handleProfileImgChange,
   animalName,
   celebrityName,
   myNickname,
 }) => {
   const [isLoading, setIsLoading] = useState(false);
+
   const [showWebcam, setShowWebcam] = useState(false);
   const webcamRef = useRef<Webcam>(null);
+
+  // const [celebrityImg, setCelebrityImg] = useState<string | null>(null);
+  // const [animalImg, setAnimalImg] = useState<string | null>(null);
+
 
   // 파일 업로드 핸들러
   const onProfileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {

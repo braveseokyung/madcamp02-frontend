@@ -36,6 +36,32 @@ interface TopRank {
   image_url: string | null;
 }
 
+// 2) /contest-top3 응답 전체 타입
+export interface TopRanksResponse {
+  first: TopRank | null;
+  second: TopRank | null;
+  third: TopRank | null;
+}
+
+interface LatestPhotoResponse {
+  user_photo_id: number;
+}
+
+export interface ContestEntry {
+  entry_id: number;
+  contest_id: number;
+  user_id: number;
+  user_photo_id: number;
+  similarity_score: number;
+  submitted_at: string; // ISO timestamp
+}
+
+// 2) /contest-entry-check 응답 전체 타입
+export interface ContestEntryCheckResponse {
+  exists: boolean;
+  entry: ContestEntry | null;
+}
+
 function getFullImageUrl(image_url: string | undefined | null) {
   if (!image_url) return '';
   if (/^https?:\/\//.test(image_url)) return image_url;
@@ -147,7 +173,7 @@ function ContestTab({
   const fetchTopRanks = async (contest_id: number) => {
     setRankLoading(true);
     try {
-      const res = await axios.get(`${BACKEND_URL}/contest-top3`, {
+      const res = await axios.get<TopRanksResponse>(`${BACKEND_URL}/contest-top3`, {
         params: { contest_id },
         headers: { Authorization: `Bearer ${userToken}` },
       });
@@ -172,7 +198,7 @@ function ContestTab({
   const handleChallenge = async (contest: Contest) => {
     try {
       // 1. 내 최신 사진 id
-      const latestPhotoRes = await axios.get(
+      const latestPhotoRes = await axios.get<LatestPhotoResponse>(
         `${BACKEND_URL}/latest-user-photo-id/${myUserId}`,
         {
           headers: { Authorization: `Bearer ${userToken}` },
@@ -185,7 +211,7 @@ function ContestTab({
       }
 
       // 2. 중복 참가 체크
-      const entryCheckRes = await axios.get(
+      const entryCheckRes = await axios.get<ContestEntryCheckResponse>(
         `${BACKEND_URL}/contest-entry-check`,
         {
           params: { contest_id: contest.contest_id, user_id: myUserId },

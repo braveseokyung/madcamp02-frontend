@@ -1,10 +1,17 @@
 // src/SocialGoogle.tsx
 import React, { useEffect } from 'react';
 import axios from 'axios';
+import type { Profile } from './types';
 
 interface SocialGoogleProps {
   onLoginSuccess: (userToken: string) => void; // 구글 access token은 백엔드에서만 관리하고 프론트엔드로는 자체 JWT만 전달
 }
+
+interface GoogleLoginResponse {
+  token: string;
+  user: Profile;    // 앞서 만든 User 인터페이스를 재사용
+}
+
 
 const SocialGoogle: React.FC<SocialGoogleProps> = ({ onLoginSuccess }) => {
   // .env 파일에서 구글 클라이언트 ID 가져오기
@@ -13,10 +20,11 @@ const SocialGoogle: React.FC<SocialGoogleProps> = ({ onLoginSuccess }) => {
   // IMPORTANT: 이 redirect_uri는 구글 개발자 콘솔에 등록될 프론트엔드의 콜백 URI입니다.
   // 이 경로로 인가 코드를 받을 것입니다.
   // 예: http://localhost:5173/auth/google/callback
-  const GOOGLE_REDIRECT_URI: string = 'http://localhost:5173/auth/callback';
+  const GOOGLE_REDIRECT_URI: string = 'https://facer-lake.vercel.app/auth/callback';
+//   const GOOGLE_REDIRECT_URI: string = 'http://localhost:5173/auth/callback';
 
   // 백엔드 로그인 엔드포인트 (VM IP 주소와 포트로 변경 필요)
-  const BACKEND_LOGIN_URI: string = 'http://172.20.12.113:80/auth/google/login';
+  const BACKEND_LOGIN_URI: string = 'https://panbak.site/auth/google/login';
 
   useEffect(() => {
     if (!GOOGLE_CLIENT_ID) {
@@ -47,7 +55,7 @@ const SocialGoogle: React.FC<SocialGoogleProps> = ({ onLoginSuccess }) => {
 
   const sendCodeToBackend = async (code: string) => {
     try {
-      const response = await axios.post(BACKEND_LOGIN_URI, { code });
+      const response = await axios.post<GoogleLoginResponse>(BACKEND_LOGIN_URI, { code });
       console.log('백엔드로부터 구글 로그인 응답:', response.data);
 
       const { token: userToken } = response.data;

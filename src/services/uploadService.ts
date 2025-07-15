@@ -48,6 +48,7 @@ export async function uploadUserPhoto(
 
   const response = await axios.post<{ photo: UploadResponse }>(
     `${BACKEND_URL}/uploaduser`,
+    // "http://172.20.12.113:80/uploaduser",
     formData,
     {
       headers: { 
