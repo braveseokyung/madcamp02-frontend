@@ -47,7 +47,8 @@ export async function uploadUserPhoto(
 //   formData.append('meta', JSON.stringify({ userid: userId }));
 
   const response = await axios.post<{ photo: UploadResponse }>(
-    `${BACKEND_URL}/uploaduser`,
+    // `${BACKEND_URL}/uploaduser`,
+    "https://172.20.12.113:443/uploaduser",
     formData,
     {
       headers: { 
