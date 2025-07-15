@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 
 interface FirstProps {
   profileImg: string | null;
-  pendingImg: string | null;
+  // pendingImg: string | null;
   handleProfileImgChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   animalName: string | null;
   celebrityName: string | null;
@@ -14,7 +14,7 @@ interface FirstProps {
 
 const First: React.FC<FirstProps> = ({
   profileImg,
-  pendingImg,
+  // pendingImg,
   handleProfileImgChange,
   animalName,
   celebrityName
@@ -23,7 +23,7 @@ const First: React.FC<FirstProps> = ({
 }) => {
 
   const [isLoading, setIsLoading] = useState(false);
-  const [celebrityImg, setCelebrityImg] = useState<string | null>(null);
+  // const [celebrityImg, setCelebrityImg] = useState<string | null>(null);
   // const [animalImg, setAnimalImg] = useState<string | null>(null);
 
   // ② 파일 변경 핸들러 정의 (컴포넌트 바디 안, return 위)

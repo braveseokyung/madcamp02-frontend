@@ -2,6 +2,7 @@ import React from 'react';
 
 // 1. props 타입 정의
 interface ProfileModalProps {
+  open: boolean;
   onClose: () => void;
   profileImg: string | null;
   handleProfileImgChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -9,10 +10,12 @@ interface ProfileModalProps {
 
 // 2. 컴포넌트에 타입 적용
 const ProfileModal: React.FC<ProfileModalProps> = ({
+  open,
   onClose,
   profileImg,
   handleProfileImgChange,
 }) => {
+  if (!open) return null;
   return (
     <div
       style={{

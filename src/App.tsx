@@ -1,14 +1,14 @@
 // App.tsx
 import React, { useState, useEffect } from 'react';
-import { Card } from '@/components/ui/card';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogClose,
-} from '@/components/ui/dialog';
+// import { Card } from '@/components/ui/card';
+// import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+// import {
+//   Dialog,
+//   DialogContent,
+//   DialogHeader,
+//   DialogTitle,
+//   DialogClose,
+// } from '@/components/ui/dialog';
 import First from './first';
 import FriendList from './friendlist';
 import ContestTab from './contesttab';
@@ -21,21 +21,28 @@ import {
   getSimilarAnimal,
   getSimilarCelebrity,
 } from '@/services/uploadService';
+import type { Profile } from './types';
+import ProfileModal from './profilemodal';
 
 type ProfileImgType = string | null;
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
-interface UserProfile {
-  user_id: number;
-  nickname: string | null;
-  profile_image_url: string | null;
-  // 필요시 추가 필드
+
+interface ProfileResponse {
+  user: Profile;
 }
 
-const tabList = [
-  { label: '사진 업로드', value: 'upload' },
-  { label: '친구', value: 'friend' },
-];
+// interface UserProfile {
+//   user_id: number;
+//   nickname: string | null;
+//   profile_image_url: string | null;
+//   // 필요시 추가 필드
+// }
+
+// const tabList = [
+//   { label: '사진 업로드', value: 'upload' },
+//   { label: '친구', value: 'friend' },
+// ];
 
 const SidebarMenus = [
   { label: '닮은꼴', icon: FaHome },
@@ -50,7 +57,7 @@ const App: React.FC = () => {
   const [selectedMenuIdx, setSelectedMenuIdx] = useState<number>(0);
   const [showProfile, setShowProfile] = useState<boolean>(false);
   const [profileImg, setProfileImg] = useState<ProfileImgType>(null);
-  const [pendingImg, setPendingImg] = useState<ProfileImgType>(null);
+  // const [pendingImg, setPendingImg] = useState<ProfileImgType>(null);
   const [animalName, setAnimalName] = useState<string>('');
   const [celebrityName, setCelebrityName] = useState<string>('');
 
@@ -76,7 +83,7 @@ const App: React.FC = () => {
     if (!userToken) return;
     const fetchProfile = async () => {
       try {
-        const res = await axios.get(`${BACKEND_URL}/api/profile`, {
+        const res = await axios.get<ProfileResponse>(`${BACKEND_URL}/api/profile`, {
           headers: { Authorization: `Bearer ${userToken}` },
         });
         console.log(res.data.user);
@@ -137,6 +144,7 @@ const App: React.FC = () => {
       );
       const celebRes = await getSimilarCelebrity(embeddingArray);
       console.log('결과', celebRes.name);
+      console.log(animal_confidence);
 
       setCelebrityName(celebRes.name);
       setAnimalName(animal);
@@ -152,14 +160,14 @@ const App: React.FC = () => {
     }
   };
 
-  const handlePendingImgChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => setPendingImg(reader.result as string);
-      reader.readAsDataURL(file);
-    }
-  };
+  // const handlePendingImgChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const file = e.target.files?.[0];
+  //   if (file) {
+  //     const reader = new FileReader();
+  //     reader.onload = () => setPendingImg(reader.result as string);
+  //     reader.readAsDataURL(file);
+  //   }
+  // };
 
   if (!isLoggedIn) {
     // 로그인되지 않았다면 SocialGoogle 컴포넌트 렌더링
@@ -215,7 +223,7 @@ const App: React.FC = () => {
         {selectedMenuIdx === 0 ? (
           <First
             profileImg={profileImg}
-            pendingImg={pendingImg}
+            // pendingImg={pendingImg}
             handleProfileImgChange={handleProfileImgChange}
             animalName={animalName}
             celebrityName={celebrityName}
@@ -248,14 +256,14 @@ const App: React.FC = () => {
       </main>
 
       {/* 프로필 모달 */}
-      {/*
+      
       <ProfileModal
         open={showProfile}
         onClose={() => setShowProfile(false)}
         profileImg={profileImg}
         handleProfileImgChange={handleProfileImgChange}
       />
-      */}
+     
     </div>
   );
 };

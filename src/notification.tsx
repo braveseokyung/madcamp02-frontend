@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Card } from './components/ui/card';
 import { Button } from './components/ui/button';
@@ -30,7 +30,7 @@ function NotificationTab({
   const fetchNotifications = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${BACKEND_URL}/notifications`, {
+      const res = await axios.get<Notification[]>(`${BACKEND_URL}/notifications`, {
         headers: { Authorization: `Bearer ${userToken}` },
       });
       setNotifications(res.data);

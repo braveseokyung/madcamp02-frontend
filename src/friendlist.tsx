@@ -12,7 +12,7 @@ import { Input } from './components/ui/input';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
-interface Friend {
+interface FriendsResponse {
   friendships_id: number;
   status: string;
   direction: 'incoming' | 'outgoing';
@@ -25,12 +25,33 @@ interface Friend {
   };
 }
 
-interface UserSearchResult {
-  user_id: number;
-  nickname: string;
-  email: string;
-  profile_image_url?: string;
-  is_online?: boolean;
+// interface UserSearchResult {
+//   user_id: number;
+//   nickname: string;
+//   email: string;
+//   profile_image_url?: string;
+//   is_online?: boolean;
+// }
+
+export interface UserSearchResult {
+  user_id: number;                      // primary key, NOT NULL
+  google_id: string | null;             // nullable
+  email: string;                        // NOT NULL
+  nickname: string;                     // NOT NULL
+  profile_image_url: string | null;     // nullable
+  is_online: boolean;                   // default true
+  created_at: string;                   // TIMESTAMP with time zone
+  updated_at: string;                   // TIMESTAMP with time zone
+  password: string | null;              // nullable
+}
+
+export interface FriendshipResponse {
+  friendships_id: number;        // PK (identity)
+  requester_user_id: number;
+  receiver_user_id: number;
+  status: string;
+  requested_at: string;         // ISO timestamp
+  responded_at: string | null;  // 아직 응답 전이면 null
 }
 
 interface SimilarityResult {
@@ -58,7 +79,7 @@ async function searchByNickname(
 ): Promise<UserSearchResult[]> {
   if (!nickname) return [];
   try {
-    const res = await axios.get(`${BACKEND_URL}/searchnickname`, {
+    const res = await axios.get<UserSearchResult[]>(`${BACKEND_URL}/searchnickname`, {
       params: { nickname },
       headers: { Authorization: `Bearer ${userToken}` },
     });
@@ -76,7 +97,7 @@ async function addFriend(
 ): Promise<number | undefined> {
   if (!requesterid || !receiverid) return;
   try {
-    const res = await axios.post(
+    const res = await axios.post<FriendshipResponse>(
       `${BACKEND_URL}/friendship_add`,
       {
         requester_user_id: requesterid,
@@ -130,7 +151,7 @@ const FriendList: React.FC<FriendListProps> = ({
   const [searchLoading, setSearchLoading] = useState(false);
 
   // 친구 목록
-  const [friends, setFriends] = useState<Friend[]>([]);
+  const [friends, setFriends] = useState<FriendsResponse[]>([]);
   const [friendsLoading, setFriendsLoading] = useState(false);
 
   // 친구 정보 모달
@@ -143,7 +164,7 @@ const FriendList: React.FC<FriendListProps> = ({
   const [simLoading, setSimLoading] = useState(false);
   const [simError, setSimError] = useState<string | null>(null);
   const [similarity, setSimilarity] = useState<SimilarityResult | null>(null);
-  const [simTarget, setSimTarget] = useState<Friend | null>(null);
+  const [simTarget, setSimTarget] = useState<FriendsResponse | null>(null);
 
   // 검색 입력 핸들러
   const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -166,7 +187,7 @@ const FriendList: React.FC<FriendListProps> = ({
   // 친구 추가
   const handleAddFriend = async (
     receiverUserId: number,
-    receiverNickname: string
+    // receiverNickname: string
   ) => {
     if (!myUserId) {
       alert('로그인 필요');
@@ -204,10 +225,10 @@ const FriendList: React.FC<FriendListProps> = ({
   const fetchFriends = async () => {
     setFriendsLoading(true);
     try {
-      const res = await axios.get(`${BACKEND_URL}/friends`, {
+      const res = await axios.get<FriendsResponse[]>(`${BACKEND_URL}/friends`, {
         headers: { Authorization: `Bearer ${userToken}` },
       });
-      setFriends(res.data.filter((f: Friend) => f.status === 'accepted'));
+      setFriends(res.data.filter((f: FriendsResponse) => f.status === 'accepted'));
     } catch (err) {
       console.error('친구 목록 조회 실패:', err);
     }
@@ -219,14 +240,14 @@ const FriendList: React.FC<FriendListProps> = ({
   }, [userToken]);
 
   // 친구 클릭 → 최신 사진 유사도 모달
-  const handleFriendSimClick = async (friend: Friend) => {
+  const handleFriendSimClick = async (friend: FriendsResponse) => {
     setSimTarget(friend);
     setSimModalOpen(true);
     setSimLoading(true);
     setSimError(null);
     setSimilarity(null);
     try {
-      const res = await axios.post(
+      const res = await axios.post<SimilarityResult>(
         `${BACKEND_URL}/latest-photo-similarity`,
         {
           user_id1: myUserId,
@@ -244,10 +265,10 @@ const FriendList: React.FC<FriendListProps> = ({
   };
 
   // 친구 정보 모달 (검색 결과에서 클릭 시)
-  const handleSearchResultClick = (user: UserSearchResult) => {
-    setSelectedFriend(user);
-    setShowSearch(false);
-  };
+//   const handleSearchResultClick = (user: UserSearchResult) => {
+//     setSelectedFriend(user);
+//     setShowSearch(false);
+//   };
 
   return (
     <div className="w-full max-w-2xl mx-auto">
@@ -368,7 +389,7 @@ const FriendList: React.FC<FriendListProps> = ({
                   <Button
                     size="sm"
                     className="ml-2"
-                    onClick={() => handleAddFriend(user.user_id, user.nickname)}
+                    onClick={() => handleAddFriend(user.user_id)}
                   >
                     친구 추가
                   </Button>
