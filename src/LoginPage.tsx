@@ -24,7 +24,7 @@ const SocialGoogle: React.FC<SocialGoogleProps> = ({ onLoginSuccess }) => {
 //   const GOOGLE_REDIRECT_URI: string = 'http://localhost:5173/auth/callback';
 
   // 백엔드 로그인 엔드포인트 (VM IP 주소와 포트로 변경 필요)
-  const BACKEND_LOGIN_URI: string = 'http://172.20.12.113:80/auth/google/login';
+  const BACKEND_LOGIN_URI: string = 'https://172.20.12.113:443/auth/google/login';
 
   useEffect(() => {
     if (!GOOGLE_CLIENT_ID) {
