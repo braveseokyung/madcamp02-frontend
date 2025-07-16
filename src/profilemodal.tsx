@@ -1,21 +1,25 @@
 import React from 'react';
+import { FaUser } from 'react-icons/fa';
 
-// 1. props 타입 정의
 interface ProfileModalProps {
   open: boolean;
   onClose: () => void;
   profileImg: string | null;
   handleProfileImgChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  nickname: string;
+  email: string;
 }
 
-// 2. 컴포넌트에 타입 적용
 const ProfileModal: React.FC<ProfileModalProps> = ({
   open,
   onClose,
   profileImg,
   handleProfileImgChange,
+  nickname,
+  email,
 }) => {
   if (!open) return null;
+
   return (
     <div
       style={{
@@ -53,6 +57,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
             fontSize: 20,
             cursor: 'pointer',
           }}
+          aria-label="닫기"
         >
           ✕
         </button>
@@ -62,6 +67,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
+            textAlign: 'center',
           }}
         >
           <label htmlFor="profile-upload" style={{ cursor: 'pointer' }}>
@@ -84,7 +90,9 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                   alt="프로필"
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
-              ) : null}
+              ) : (
+                <FaUser size={55} color="#fff" />
+              )}
             </div>
             <input
               id="profile-upload"
@@ -94,10 +102,18 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
               onChange={handleProfileImgChange}
             />
           </label>
-          <div style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 8 }}>
-            닉네임
+
+          <div
+            style={{
+              fontSize: 24,
+              fontWeight: 'bold',
+              marginBottom: 8,
+              color: '#333',
+            }}
+          >
+            {nickname}
           </div>
-          <div style={{ color: '#666' }}>이메일 등 추가 정보</div>
+          <div style={{ color: '#666', fontSize: 14 }}>{email}</div>
         </div>
       </div>
     </div>
