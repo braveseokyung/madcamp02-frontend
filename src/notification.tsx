@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Card } from './components/ui/card';
-import { Button } from './components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -27,12 +28,16 @@ function NotificationTab({
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // 알림 받아오기
   const fetchNotifications = async () => {
     setLoading(true);
     try {
-      const res = await axios.get<Notification[]>(`${BACKEND_URL}/notifications`, {
-        headers: { Authorization: `Bearer ${userToken}` },
-      });
+      const res = await axios.get<Notification[]>(
+        `${BACKEND_URL}/notifications`,
+        {
+          headers: { Authorization: `Bearer ${userToken}` },
+        }
+      );
       setNotifications(res.data);
     } catch (err) {
       console.error('알림 목록 조회 실패:', err);
@@ -57,7 +62,7 @@ function NotificationTab({
         { headers: { Authorization: `Bearer ${userToken}` } }
       );
       await handleDelete(notification_id);
-      if (onFriendAccepted) onFriendAccepted();
+      onFriendAccepted?.();
       alert('친구 요청을 수락했습니다!');
     } catch (err) {
       alert('친구 요청 수락 실패');
@@ -80,50 +85,60 @@ function NotificationTab({
     }
   };
 
-  // 친구 요청 알림 판별
-  const isFriendRequest = (noti: Notification) => !!noti.friendships_id;
-
   return (
-    <div className="w-full max-w-xl mx-auto flex flex-col gap-4 mt-8">
+    <div className="w-full max-w-xl mx-auto flex flex-col gap-4 py-8 px-4">
       {loading ? (
-        <div className="text-center text-gray-400">로딩 중...</div>
+        // 🔷 로딩 skeleton 추가
+        Array.from({ length: 3 }).map((_, i) => (
+          <Card key={i}>
+            <CardContent className="p-4 space-y-2">
+              <Skeleton className="w-3/4 h-4" />
+              <Skeleton className="w-1/2 h-3" />
+            </CardContent>
+          </Card>
+        ))
       ) : notifications.length === 0 ? (
-        <div className="text-center text-gray-400">새로운 알림이 없습니다.</div>
+        <div className="text-center text-gray-500 text-sm">
+          새로운 알림이 없습니다.
+        </div>
       ) : (
         notifications.map((noti) => (
           <Card
             key={noti.notification_id}
-            className={`flex items-center justify-between px-6 py-4 gap-4 shadow-sm ${
-              noti.is_read ? 'bg-gray-100' : 'bg-white'
-            }`}
+            className={noti.is_read ? 'bg-gray-100' : 'bg-white'}
           >
-            <div>
-              <div className="text-sm text-gray-700">{noti.message}</div>
-              <div className="text-xs text-gray-400">
-                {new Date(noti.created_at).toLocaleString()}
-                {noti.friendships_id}
+            <CardContent className="p-4 flex justify-between items-start gap-4">
+              <div className="flex-1">
+                <div className="text-sm text-gray-800">{noti.message}</div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  {new Date(noti.created_at).toLocaleString()}
+                </div>
               </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {isFriendRequest(noti) && (
+
+              {/* 🔷 버튼영역 */}
+              <div className="flex flex-col items-end gap-2">
+                {noti.friendships_id && (
+                  <Button
+                    size="sm"
+                    variant="default"
+                    className="bg-green-500 hover:bg-green-600"
+                    onClick={() =>
+                      handleAccept(noti.friendships_id, noti.notification_id)
+                    }
+                  >
+                    수락
+                  </Button>
+                )}
                 <Button
+                  variant="ghost"
                   size="sm"
-                  className="bg-green-500 hover:bg-green-600 text-white font-bold px-4 py-1 rounded"
-                  onClick={() =>
-                    handleAccept(noti.friendships_id, noti.notification_id)
-                  }
+                  className="text-gray-400 hover:text-red-500 px-2"
+                  onClick={() => handleDelete(noti.notification_id)}
                 >
-                  수락
+                  ×
                 </Button>
-              )}
-              <button
-                className="text-gray-400 hover:text-red-400 text-lg px-2"
-                aria-label="알림 삭제"
-                onClick={() => handleDelete(noti.notification_id)}
-              >
-                ×
-              </button>
-            </div>
+              </div>
+            </CardContent>
           </Card>
         ))
       )}
