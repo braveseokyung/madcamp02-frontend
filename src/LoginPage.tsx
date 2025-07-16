@@ -9,13 +9,13 @@ interface SocialGoogleProps {
 
 interface GoogleLoginResponse {
   token: string;
-  user: Profile;    // 앞서 만든 User 인터페이스를 재사용
+  user: Profile; // 앞서 만든 User 인터페이스를 재사용
 }
-
 
 const SocialGoogle: React.FC<SocialGoogleProps> = ({ onLoginSuccess }) => {
   // .env 파일에서 구글 클라이언트 ID 가져오기
-  const GOOGLE_CLIENT_ID: string | undefined = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+  const GOOGLE_CLIENT_ID: string | undefined = import.meta.env
+    .VITE_GOOGLE_CLIENT_ID;
 
   // IMPORTANT: 이 redirect_uri는 구글 개발자 콘솔에 등록될 프론트엔드의 콜백 URI입니다.
   // 이 경로로 인가 코드를 받을 것입니다.
@@ -30,7 +30,7 @@ const SocialGoogle: React.FC<SocialGoogleProps> = ({ onLoginSuccess }) => {
   useEffect(() => {
     if (!GOOGLE_CLIENT_ID) {
       console.error("환경 변수 'VITE_GOOGLE_CLIENT_ID'가 설정되지 않았습니다.");
-      alert("구글 로그인 설정에 문제가 있습니다. 관리자에게 문의하세요.");
+      alert('구글 로그인 설정에 문제가 있습니다. 관리자에게 문의하세요.');
       return;
     }
 
@@ -52,11 +52,19 @@ const SocialGoogle: React.FC<SocialGoogleProps> = ({ onLoginSuccess }) => {
       // 인가 코드를 백엔드로 전송하여 토큰 교환 및 로그인 처리 요청
       sendCodeToBackend(code);
     }
-  }, [GOOGLE_CLIENT_ID, GOOGLE_REDIRECT_URI, BACKEND_LOGIN_URI, onLoginSuccess]);
+  }, [
+    GOOGLE_CLIENT_ID,
+    GOOGLE_REDIRECT_URI,
+    BACKEND_LOGIN_URI,
+    onLoginSuccess,
+  ]);
 
   const sendCodeToBackend = async (code: string) => {
     try {
-      const response = await axios.post<GoogleLoginResponse>(BACKEND_LOGIN_URI, { code });
+      const response = await axios.post<GoogleLoginResponse>(
+        BACKEND_LOGIN_URI,
+        { code }
+      );
       console.log('백엔드로부터 구글 로그인 응답:', response.data);
 
       const { token: userToken } = response.data;
@@ -67,8 +75,14 @@ const SocialGoogle: React.FC<SocialGoogleProps> = ({ onLoginSuccess }) => {
         alert('로그인 처리 중 필수 토큰을 받지 못했습니다.');
       }
     } catch (error: any) {
-      console.error('백엔드 구글 로그인 요청 중 오류 발생:', error.response ? error.response.data : error.message);
-      alert('로그인 처리 중 오류가 발생했습니다: ' + (error.response?.data?.message || error.message));
+      console.error(
+        '백엔드 구글 로그인 요청 중 오류 발생:',
+        error.response ? error.response.data : error.message
+      );
+      alert(
+        '로그인 처리 중 오류가 발생했습니다: ' +
+          (error.response?.data?.message || error.message)
+      );
     }
   };
 
@@ -85,7 +99,7 @@ const SocialGoogle: React.FC<SocialGoogleProps> = ({ onLoginSuccess }) => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-[#f5f5f7] text-[#222]">
-      <h1 className="text-4xl font-bold mb-8">닮은꼴 찾기</h1>
+      <h1 className="text-4xl font-bold mb-8">판박이 찾기</h1>
       <p className="text-lg mb-12">로그인하여 서비스를 이용해주세요.</p>
       <button
         onClick={handleLogin}
