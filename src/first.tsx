@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Card } from '@/components/ui/card';
+import { FaCamera } from 'react-icons/fa';  
 
 interface FirstProps {
   profileImg: string | null;
@@ -134,10 +135,20 @@ const First: React.FC<FirstProps> = ({
       </h1>
 
       {/* 업로드 + 웹캠 섹션 */}
-      <div className="flex gap-12 w-full justify-center mb-6">
+      <div className="flex flex-col gap-12 w-full justify-center mb-4">
+        {/* 웹캠 버튼 */}
+          <div className="flex flex-col items-end justify-center ml-2">
+            <button
+              type="button"
+              className="px-6 py-3 mr-5 bg-blue-500 text-white rounded-lg font-bold shadow hover:bg-blue-600 transition"
+              onClick={handleOpenWebcam}
+            >
+              <FaCamera/>
+            </button>
+          </div>
         <Card
           className="
-            flex-1 min-w-[300px] max-w-[350px] h-[350px]
+            flex-1 min-w-[300px] max-w-[1000px] max-h-[350px]
             flex items-center justify-center
             rounded-2xl border-2 border-dashed border-gray-300
             hover:border-gray-400 transition-colors duration-200
@@ -148,6 +159,7 @@ const First: React.FC<FirstProps> = ({
             htmlFor="profile-upload"
             className="relative w-full h-full flex flex-col items-center justify-center cursor-pointer aspect-square"
           >
+            
             {/* 이미지 미리보기 */}
             {profileImg ? (
               <div className="w-full h-full aspect-square flex items-center justify-center">
@@ -173,16 +185,7 @@ const First: React.FC<FirstProps> = ({
           </label>
         </Card>
 
-        {/* 웹캠 버튼 */}
-        <div className="flex flex-col items-center justify-center ml-2">
-          <button
-            type="button"
-            className="px-6 py-3 bg-blue-500 text-white rounded-lg font-bold shadow hover:bg-blue-600 transition"
-            onClick={handleOpenWebcam}
-          >
-            웹캠으로 사진 찍기
-          </button>
-        </div>
+        
       </div>
 
       {/* 웹캠 창 */}
